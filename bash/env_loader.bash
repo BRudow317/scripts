@@ -15,7 +15,6 @@ if [[ ! -f "$ENV_FILE" ]]; then
   return 1 2>/dev/null || exit 1
 fi
 
-# Export everything we set while sourcing
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
