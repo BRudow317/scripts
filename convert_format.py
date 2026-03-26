@@ -1,13 +1,25 @@
 # FORMAT CONVERSION - JSON, XML, YAML, TOML, CSV, EXCEL
+import json
+import csv
+import os
+import sys
+import base64
+from io import StringIO
+from datetime import datetime, date
+from pathlib import Path
+from typing import Any, Callable, Type, Mapping
+from dataclasses import is_dataclass, asdict
+from install_package import install_package
+import pandas as pd
 
 def to_json(
     data: Any,
     pretty: bool = True,
     ensure_ascii: bool = False,
-    default: Optional[Callable] = None
+    default: Callable | None = None
 ) -> str:
     """
-    5. to_json - Convert any data to JSON string
+    to_json - Convert any data to JSON string
     
     Args:
         data: Data to convert
@@ -29,7 +41,7 @@ def to_json(
             except TypeError:
                 pass
         
-        if is_dataclass(obj):
+        if is_dataclass(obj) and not isinstance(obj, type):
             return asdict(obj)
         if isinstance(obj, (datetime, date)):
             return obj.isoformat()
@@ -54,10 +66,10 @@ def to_json(
 
 def from_json(
     json_str: str,
-    cls: Optional[Type] = None
+    cls: Type | None = None
 ) -> Any:
     """
-    6. from_json - Parse JSON string to Python object
+    from_json - Parse JSON string to Python object
     
     Args:
         json_str: JSON string to parse
@@ -78,20 +90,22 @@ def from_json(
         elif hasattr(cls, "from_dict"):
             return cls.from_dict(data)
         else:
-            obj = cls.__new__(cls)
-            obj.__dict__.update(data)
-            return obj
+            obj = object.__new__(cls)
+            if hasattr(obj, "__dict__") and isinstance(data, dict):
+                obj.__dict__.update(data)
+                return obj
+            return data
     
     return data
 
 
 def json_to_xml(
-    json_data: Union[str, Dict],
+    json_data: str | dict,
     root_name: str = "root",
     pretty: bool = True
 ) -> str:
     """
-    7. json_to_xml - Convert JSON to XML
+    json_to_xml - Convert JSON to XML
     
     Args:
         json_data: JSON string or dict
@@ -123,9 +137,9 @@ def json_to_xml(
 def xml_to_json(
     xml_str: str,
     strip_root: bool = True
-) -> Union[Dict, str]:
+) -> dict | str:
     """
-    8. xml_to_json - Convert XML to JSON/dict
+    xml_to_json - Convert XML to JSON/dict
     
     Args:
         xml_str: XML string
@@ -152,11 +166,11 @@ def xml_to_json(
 
 
 def json_to_yaml(
-    json_data: Union[str, Dict],
+    json_data: str | dict,
     default_flow_style: bool = False
 ) -> str:
     """
-    9. json_to_yaml - Convert JSON to YAML
+    json_to_yaml - Convert JSON to YAML
     
     Args:
         json_data: JSON string or dict
@@ -180,9 +194,9 @@ def json_to_yaml(
     return yaml.dump(json_data, default_flow_style=default_flow_style, sort_keys=False)
 
 
-def yaml_to_json(yaml_str: str) -> Dict:
+def yaml_to_json(yaml_str: str) -> dict:
     """
-    10. yaml_to_json - Convert YAML to JSON/dict
+    yaml_to_json - Convert YAML to JSON/dict
     
     Args:
         yaml_str: YAML string
@@ -202,9 +216,9 @@ def yaml_to_json(yaml_str: str) -> Dict:
     return yaml.safe_load(yaml_str)
 
 
-def json_to_toml(json_data: Union[str, Dict]) -> str:
+def json_to_toml(json_data: str | Mapping[str, Any]) -> str:
     """
-    11. json_to_toml - Convert JSON to TOML
+    json_to_toml - Convert JSON to TOML
     
     Args:
         json_data: JSON string or dict
@@ -221,15 +235,21 @@ def json_to_toml(json_data: Union[str, Dict]) -> str:
         install_package("toml")
         import toml
     
+    parsed_data: Mapping[str, Any]
     if isinstance(json_data, str):
-        json_data = json.loads(json_data)
-    
-    return toml.dumps(json_data)
+        loaded = json.loads(json_data)
+        if not isinstance(loaded, dict):
+            raise TypeError("JSON must decode to an object at the top level for TOML conversion")
+        parsed_data = loaded
+    else:
+        parsed_data = json_data
+
+    return toml.dumps(parsed_data)
 
 
-def toml_to_json(toml_str: str) -> Dict:
+def toml_to_json(toml_str: str) -> dict:
     """
-    12. toml_to_json - Convert TOML to JSON/dict
+    toml_to_json - Convert TOML to JSON/dict
     
     Args:
         toml_str: TOML string
@@ -250,12 +270,12 @@ def toml_to_json(toml_str: str) -> Dict:
 
 
 def json_to_csv(
-    json_data: Union[str, List[Dict]],
-    output_file: Optional[str] = None,
+    json_data: str | list[dict],
+    output_file: str | None = None,
     delimiter: str = ","
 ) -> str:
     """
-    13. json_to_csv - Convert JSON array to CSV
+    json_to_csv - Convert JSON array to CSV
     
     Args:
         json_data: JSON string or list of dicts
@@ -271,11 +291,15 @@ def json_to_csv(
     if isinstance(json_data, str):
         json_data = json.loads(json_data)
     
-    if not json_data:
+    if not isinstance(json_data, list) or not json_data:
         return ""
     
+    first_row = json_data[0]
+    if not isinstance(first_row, dict):
+        raise TypeError("json_data must be a list of dicts")
+    
     output = StringIO()
-    writer = csv.DictWriter(output, fieldnames=json_data[0].keys(), delimiter=delimiter)
+    writer = csv.DictWriter(output, fieldnames=list(first_row.keys()), delimiter=delimiter)
     writer.writeheader()
     writer.writerows(json_data)
     
@@ -292,9 +316,9 @@ def csv_to_json(
     csv_data: str,
     delimiter: str = ",",
     has_header: bool = True
-) -> List[Dict]:
+) -> list[dict]:
     """
-    14. csv_to_json - Convert CSV to JSON/list of dicts
+    csv_to_json - Convert CSV to JSON/list of dicts
     
     Args:
         csv_data: CSV string or file path
@@ -317,12 +341,12 @@ def csv_to_json(
 
 
 def json_to_excel(
-    json_data: Union[str, List[Dict], Dict[str, List[Dict]]],
+    json_data: str | list[dict] | dict[str, list[dict]],
     output_file: str,
     sheet_name: str = "Sheet1"
 ) -> str:
     """
-    15. json_to_excel - Convert JSON to Excel file
+    json_to_excel - Convert JSON to Excel file
     
     Args:
         json_data: JSON data (list for single sheet, dict for multiple sheets)
@@ -366,11 +390,11 @@ def json_to_excel(
 
 def excel_to_json(
     excel_file: str,
-    sheet_name: Optional[str] = None,
+    sheet_name: str | None = None,
     all_sheets: bool = False
-) -> Union[List[Dict], Dict[str, List[Dict]]]:
+) -> list[dict] | dict[str, list[dict]]:
     """
-    16. excel_to_json - Convert Excel file to JSON
+    excel_to_json - Convert Excel file to JSON
     
     Args:
         excel_file: Excel file path
@@ -400,6 +424,9 @@ def excel_to_json(
         return result
     else:
         df = pd.read_excel(excel_file, sheet_name=sheet_name)
+        if isinstance(df, dict):
+            first_df = next(iter(df.values()))
+            return first_df.to_dict(orient="records")
         return df.to_dict(orient="records")
 
 
