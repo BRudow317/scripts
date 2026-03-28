@@ -1,9 +1,12 @@
+import functools, inspect, os, sys
+from dataclasses import dataclass, field, is_dataclass, fields
+from typing import Any, Callable
 # PRETTY PRINTING & DEBUGGING
 
 
 def pp(obj: Any, max_depth: int = 4, indent: int = 2) -> None:
     """
-    47. pp - Pretty print any object
+    pp - Pretty print any object
     
     Args:
         obj: Object to print
@@ -25,7 +28,7 @@ def pp(obj: Any, max_depth: int = 4, indent: int = 2) -> None:
 
 def debug(*args, **kwargs) -> None:
     """
-    48. debug - Debug print with file/line info
+    debug - Debug print with file/line info
     
     Example:
         debug("value is", value)
@@ -49,7 +52,7 @@ def debug(*args, **kwargs) -> None:
 
 def log_call(func: Callable) -> Callable:
     """
-    49. log_call - Decorator to log function calls with arguments
+    log_call - Decorator to log function calls with arguments
     
     Example:
         @log_call
@@ -78,15 +81,15 @@ def log_call(func: Callable) -> Callable:
     return wrapper
 
 
-def describe(obj: Any) -> Dict[str, Any]:
+def describe(obj: Any) -> dict[str, Any]:
     """
-    50. describe - Get detailed description of any object
+    describe - Get detailed description of any object
     
     Args:
         obj: Object to describe
     
     Returns:
-        Dict with type info, methods, attributes, etc.
+        dict with type info, methods, attributes, etc.
     
     Example:
         info = describe(my_object)

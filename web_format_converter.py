@@ -9,7 +9,7 @@ def markdown_to_html(
     safe_mode: bool = False
 ) -> str:
     """
-    18. markdown_to_html - Convert Markdown to HTML
+    markdown_to_html - Convert Markdown to HTML
     
     Args:
         md_content: Markdown string
@@ -62,7 +62,7 @@ def html_to_markdown(
     strip_tags: Optional[List[str]] = None
 ) -> str:
     """
-    19. html_to_markdown - Convert HTML to Markdown
+    html_to_markdown - Convert HTML to Markdown
     
     Args:
         html_content: HTML string
