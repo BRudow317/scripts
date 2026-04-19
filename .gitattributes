@@ -1,7 +1,5 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
-# Force all text files to use Linux line endings (LF) in the working directory.
-# This fixes the "every file changed" issue when mounting into a Linux container.
 * text=auto eol=lf
 
 # binary files should not be modified

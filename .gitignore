@@ -4,13 +4,6 @@ target/
 **/bin/
 *.log
 **/logs/
-
-### IDE - VS Code ###
-.vscode/
-# EXCEPTION: If you share launch configs/tasks with the team, uncomment the next lines:
-# !.vscode/launch.json
-# !.vscode/tasks.json
-*.code-workspace
 .history/
 
 ### IDE - Eclipse / STS ###
@@ -33,6 +26,7 @@ target/
 Thumbs.db
 .env
 .env.local
+.env.md
 *.env
 .env.development
 .env.test
@@ -48,11 +42,11 @@ docker-compose.override.yml
 ProjectDocs/
 AGENTS.md
 .claude/
+.gemini/
 
 ### Frontend ###
 frontend/dist/
 frontend/build/
-frontend/.env
 node_modules/
 npm-debug.log
 yarn-error.log
