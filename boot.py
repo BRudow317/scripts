@@ -10,8 +10,8 @@ from datetime import datetime
 
 from typing import IO, TextIO
 
-PROGRAM_NAME = os.getenv("PROGRAM_NAME", "boot")
-if PROGRAM_NAME == "boot":
+PROGRAM_NAME = os.getenv("PROGRAM_NAME", "main")
+if PROGRAM_NAME == "main":
     os.environ["PROGRAM_NAME"] = PROGRAM_NAME
 
 _VAR = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)")
@@ -143,7 +143,7 @@ def parse_config_file(config_path: str | Path = "", env: str = "") -> dict[str, 
             resolved[k] = resolved[v]
     return resolved
 
-def parse_args(argv) -> argparse.Namespace:
+def get_args(argv) -> argparse.Namespace:
     _env_help_msg=f"Environment (dev01, mmdev, sit01, etc...) NOTE: This is not for .env files, use --config for those."
     _config_help_msg="Path to environment config file with key=value pairs. Values can reference other keys with $KEY or ${KEY} syntax, and can also reference environment variables. See README for details."
     _venv_help_msg = f"Path to venv for the child process (default: inherit caller's environment)"
@@ -152,11 +152,11 @@ def parse_args(argv) -> argparse.Namespace:
     _exec_help_msg = f"Child command to run. Must follow all master flags. Usage: {PROGRAM_NAME} [flags] --exec python script.py [child args...]"
 
     parser = argparse.ArgumentParser(prog=PROGRAM_NAME, description=f"{PROGRAM_NAME}.py - universal pipeline orchestrator", allow_abbrev=False)
-    parser.add_argument("--env", dest="env", required=False, type=str, help=_env_help_msg, default="")
-    parser.add_argument("--config", "--config_file", "--config-file", dest="config", required=False, type=str, default="", help=_config_help_msg)
+    parser.add_argument("--env", "--environment", dest="env", required=False, type=str, help=_env_help_msg, default="")
+    parser.add_argument("--config", "--dotenv", "--config-file", dest="config", required=False, type=str, default=os.getenv("SECRETS_ENV", ""), help=_config_help_msg)
     parser.add_argument("--venv", "--venv_dir", "--venv-dir", dest="venv", required=False, type=str, default="", help=_venv_help_msg)
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help=_verbose_help_msg)
-    parser.add_argument("-l", "--log", type=str, dest="log_dir", default="sys.stdout",  required=False, help=_log_help_msg)
+    parser.add_argument("-l", "--log", "--log_dir", "--log-dir", type=str, dest="log_dir", default="sys.stdout",  required=False, help=_log_help_msg)
     parser.add_argument("--exec", nargs=argparse.REMAINDER, default=[], dest="exec", help=_exec_help_msg)
     args = parser.parse_args(argv)
     if not args.exec:
@@ -164,7 +164,7 @@ def parse_args(argv) -> argparse.Namespace:
     return args
 
 def main():
-    args = parse_args(sys.argv[1:])
+    args = get_args(sys.argv[1:])
     logger, logfile = setup_logging(args.log_dir, args.verbose, PROGRAM_NAME)
     logger.debug(f"\nStarting {PROGRAM_NAME} with args: {args}\n\n\n")
     config_vars = parse_config_file(args.config, env=args.env) if args.config else {}
