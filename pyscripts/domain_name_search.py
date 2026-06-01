@@ -1,6 +1,6 @@
 """Main execution function."""
 import os
-import domain_utils as mypy
+import pyscripts.domain_utils as mypy
 
 # 
 def main():

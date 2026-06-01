@@ -9,7 +9,7 @@ from datetime import datetime, date
 from pathlib import Path
 from typing import Any, Callable, Type, Mapping
 from dataclasses import is_dataclass, asdict
-from install_package import install_package
+from pyscripts.install_package import install_package
 import pandas as pd
 
 def to_json(
